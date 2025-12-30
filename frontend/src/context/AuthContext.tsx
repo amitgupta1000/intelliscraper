@@ -1,0 +1,1 @@
+// Authentication context removed for public deployment

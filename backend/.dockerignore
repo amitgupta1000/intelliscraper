@@ -1,0 +1,37 @@
+# Ignore Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.env/
+
+# Ignore git and logs
+.git/
+*.log
+
+# Ignore test files and notebooks
+tests/
+*.ipynb
+
+# Ignore large text files and docs
+Crystal_DeepSearch_analysis.txt
+Crystal_DeepSearch_appendix.txt
+docs/
+
+# Ignore frontend and other non-backend folders
+../frontend/
+../docs/
+
+# Ignore Dockerfile itself (not needed in image)
+Dockerfile
+
+# Ignore Procfile and other deployment configs (if not needed)
+Procfile
+project.toml
+
+# Ignore anything else unnecessary
+*.bak
+*.tmp
