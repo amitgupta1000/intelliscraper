@@ -12,7 +12,10 @@ RUN id appuser || useradd -m -s /bin/bash appuser || true
 COPY --chown=appuser:appuser main.py .
 COPY --chown=appuser:appuser backend/ ./backend/
 
-# Install Python dependencies from backend requirements
+# Copy top-level requirements so pip can see them during the image build
+COPY --chown=appuser:appuser requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Ensure Playwright browsers are present (base image typically includes them,
@@ -25,7 +28,7 @@ RUN mkdir -p /ms-playwright && chown -R appuser:appuser /ms-playwright || true
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-	CMD curl -f http://localhost:8080/api/health || exit 1
+	CMD curl -f http://localhost:8080/health || exit 1
 
 # Switch to non-root user
 USER appuser
