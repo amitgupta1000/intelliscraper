@@ -6,6 +6,14 @@ import uuid
 from datetime import datetime
 import io, os, tempfile
 from .logging_setup import logger
+
+"""Archived stub for `fss_retriever.py`.
+
+This module managed Gemini File Search Stores and was archived to reduce
+complexity for a scraper-only deployment. Restore from Git history if needed.
+"""
+
+raise ImportError("backend.src.fss_retriever has been archived to backend/archived/. Restore from Git history if needed.")
 # Import API keys from api_keys.py
 try:
     from .api_keys import GOOGLE_API_KEY

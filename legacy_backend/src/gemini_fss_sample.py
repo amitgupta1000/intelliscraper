@@ -4,16 +4,13 @@ import glob
 from google import genai
 from google.genai import types
 
-# -----------------------------------------------------------------------------
-# CONFIGURATION
-# -----------------------------------------------------------------------------
-API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_API_KEY_HERE")
-STORE_NAME = "My_Knowledge_Base_FSS"
-# Use a model that supports File Search (e.g., gemini-1.5-flash-001 or gemini-1.5-pro-001)
-MODEL_ID = "gemini-1.5-flash-001" 
+"""Archived stub for `gemini_fss_sample.py`.
 
-# Local files to process (create dummy files for this demo if you don't have any)
-FILES_TO_PROCESS = ["contract_alpha.txt", "meeting_notes.txt"]
+This example/demo for Gemini File Search was archived to reduce active
+dependencies. Restore from Git history if you need the sample workflow.
+"""
+
+raise ImportError("backend.src.gemini_fss_sample has been archived to backend/archived/. Restore from Git history if needed.")
 
 # -----------------------------------------------------------------------------
 # HELPER: Create dummy files for demonstration

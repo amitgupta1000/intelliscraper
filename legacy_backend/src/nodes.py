@@ -6,6 +6,17 @@ from typing import Dict, Any, List, Optional, TypedDict, Union
 from .logging_setup import logger
 from .api_keys import GOOGLE_API_KEY, SERPER_API_KEY
 
+"""Archived stub for `nodes.py`.
+
+This module contained the LangGraph node implementations and many
+LLM-driven orchestration functions. It has been archived to
+`backend/archived/README.md` to simplify the codebase for a scraper-only
+deployment. Restore the original implementation from Git history when
+needed.
+"""
+
+raise ImportError("backend.src.nodes has been archived to backend/archived/. Restore from Git history if needed.")
+
 # Try to import optional dependencies with fallbacks
 try:
     from pydantic import BaseModel, Field, ValidationError, conlist

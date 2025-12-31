@@ -9,10 +9,7 @@ import time # Added time for cache timestamp
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-try:
-    from .config_minimal import GCS_BUCKET
-except Exception:
-    GCS_BUCKET = ""
+from .config import REPORT_FILENAME_TEXT
 
 @dataclass
 class SearchResult:
@@ -54,20 +51,11 @@ def clean_extracted_text(text: str) -> str:
     """Cleans extracted text by removing extra whitespaces, image files, and boilerplate text."""
     if text is None:
         return ""
-    # If incoming text contains HTML, try to extract visible text first
-    try:
-        from bs4 import BeautifulSoup
-        if '<' in text and '>' in text:
-            soup = BeautifulSoup(text, 'html.parser')
-            for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
-                tag.decompose()
-            text = soup.get_text(separator='\n', strip=True)
-    except Exception:
-        # bs4 not available or parsing failed; fall back to regex removal
-        text = re.sub(r'<[^>]+>', '', text)
-
-    # Normalize whitespace
+    # Remove extra whitespaces and newlines
     text = re.sub(r'\s+', ' ', text).strip()
+
+    # Remove HTML tags (a more general approach)
+    text = re.sub(r'<[^>]+>', '', text)
 
     # Remove common boilerplate patterns (can be expanded)
     text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)  # Remove HTML comments
@@ -255,112 +243,43 @@ def clean_extracted_text(text: str) -> str:
     return text
 
 
-def safe_format_url(u: str) -> str:
-    """Normalize and sanitize a URL string for stable use.
+# Helper function to rank URLs
+from rank_bm25 import BM25Okapi # Assuming rank_bm25 is installed
 
-    Steps:
-    - ensure scheme
-    - lowercase scheme/host
-    - remove default ports
-    - strip fragment
-    - remove common tracking query params
-    - strip trailing slash (except root)
-    """
-    if not u or not isinstance(u, str):
-        return u
-    try:
-        from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
-        p = urlparse(u)
-        scheme = p.scheme.lower() if p.scheme else 'http'
-        netloc = p.netloc.lower()
-        # remove default ports
-        if netloc.endswith(':80') and scheme == 'http':
-            netloc = netloc[:-3]
-        if netloc.endswith(':443') and scheme == 'https':
-            netloc = netloc[:-4]
-        # strip fragment
-        fragment = ''
-        # remove tracking params
-        pairs = parse_qsl(p.query, keep_blank_values=True)
-        TRACKING_PREFIXES = ('utm_', 'fbclid', 'gclid', 'mc_cid', 'mc_eid')
-        filtered = [(k, v) for (k, v) in pairs if not any(k.startswith(pref) for pref in TRACKING_PREFIXES)]
-        query = urlencode(sorted(filtered))
-        path = p.path or ''
-        if path.endswith('/') and path != '/':
-            path = path.rstrip('/')
-        norm = urlunparse((scheme, netloc, path, '', query, fragment))
-        return norm
-    except Exception:
-        return u.strip()
+def rank_urls(query: str, urls: List[str], relevant_contexts: Dict[str, Dict[str, str]]) -> List[str]:
+    """Ranks URLs based on their relevance to the query using BM25."""
+    if not urls or not relevant_contexts or not query:
+        return urls # Return original order if ranking not possible
 
+    # Extract content from the new dictionary structure
+    corpus = []
+    for url in urls:
+        context_data = relevant_contexts.get(url, {})
+        if isinstance(context_data, dict):
+            content = context_data.get('content', '')
+        else:
+            # Handle backward compatibility with old string format
+            content = context_data if isinstance(context_data, str) else ''
+        corpus.append(content)
+    tokenized_corpus = [doc.split(" ") for doc in corpus]
 
-def html_to_markdown(html: str) -> str:
-    """Convert HTML to markdown when possible, fallback to cleaned text.
+    if not any(tokenized_corpus): # Check if corpus is empty after tokenization
+        return urls # Return original order
 
-    Tries `markdownify` or `html2text` if installed; otherwise extracts text via BeautifulSoup.
-    """
-    if not html:
-        return ''
-    # Prefer markdownify
-    try:
-        from markdownify import markdownify as mdify
-        return mdify(html)
-    except Exception:
-        pass
-    # Fallback to html2text
-    try:
-        import html2text
-        h = html2text.HTML2Text()
-        h.ignore_links = False
-        return h.handle(html)
-    except Exception:
-        pass
-    # Last resort: extract visible text
-    try:
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(html, 'html.parser')
-        for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
-            tag.decompose()
-        return soup.get_text(separator='\n', strip=True)
-    except Exception:
-        # Strip tags naively
-        return re.sub(r'<[^>]+>', '', html)
+    bm25 = BM25Okapi(tokenized_corpus)
+    tokenized_query = query.split(" ")
 
+    if not tokenized_query:
+         return urls # Return original order
 
-def upload_text_to_gcs(bucket_name: str, destination: str, content: str, content_type: str = 'text/plain') -> str:
-    """Upload text to GCS and return the gs:// path. Raises informative error if GCS client unavailable."""
-    try:
-        from google.cloud import storage as gcs_lib
-    except Exception as e:
-        raise RuntimeError('google.cloud.storage not installed: ' + str(e))
-    client = gcs_lib.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(destination)
-    blob.upload_from_string(content, content_type=content_type)
-    logger.info(f"Uploaded to GCS: gs://{bucket_name}/{destination}")
-    return f'gs://{bucket_name}/{destination}'
+    scores = bm25.get_scores(tokenized_query)
+    # Pair scores with URLs and sort in descending order of scores
+    scored_urls = sorted(zip(scores, urls), reverse=True)
+    ranked_urls = [url for score, url in scored_urls]
 
+    return ranked_urls
 
-def save_text_to_gcs(content: str, filename_prefix: str = 'scraped', bucket: Optional[str] = None) -> Optional[str]:
-    """Convenience: compute filename and upload content to GCS if configured.
-
-    Returns gs:// path or None if upload not performed.
-    """
-    bucket_name = bucket or GCS_BUCKET
-    if not bucket_name:
-        logger.debug('GCS bucket not configured; skipping upload')
-        return None
-    # create a filename with timestamp and short hash
-    try:
-        import hashlib
-        ts = datetime.now().strftime('%Y%m%dT%H%M%SZ')
-        h = hashlib.sha256(content.encode('utf-8')).hexdigest()[:12]
-        dest = f"{filename_prefix}/{h}_{ts}.md"
-        return upload_text_to_gcs(bucket_name, dest, content, content_type='text/markdown')
-    except Exception as e:
-        logger.warning(f"Failed to upload to GCS: {e}")
-        return None
-
+# Function to save report to text
 
 def save_report_to_text(report_content: str, filename: str) -> str:
     """Saves the report content to Firestore only."""

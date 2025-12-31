@@ -1,16 +1,14 @@
 from datetime import datetime
 from typing import Dict, Any
 
-# Utility function to safely format prompts with content that may contain curly braces
-def safe_format(template: str, **kwargs: Any) -> str:
-    """
-    Safely format a template string, escaping any curly braces in the values.
-    This prevents ValueError when content contains unexpected curly braces.
-    """
-    # Escape any curly braces in the values
-    safe_kwargs = {k: v.replace('{', '{{').replace('}', '}}') if isinstance(v, str) else v
-                  for k, v in kwargs.items()}
-    return template.format(**safe_kwargs)
+"""Archived stub for `prompt.py`.
+
+The original prompt templates and helper functions were archived to
+`backend/archived/README.md` to reduce the active codebase to the scraper
+workflow only. Restore from Git history if you need these templates.
+"""
+
+raise ImportError("backend.src.prompt has been archived to backend/archived/. Restore from Git history if needed.")
 
 # Get current date in a readable format
 def get_current_date():

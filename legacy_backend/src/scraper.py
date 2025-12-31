@@ -3,15 +3,10 @@ from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from .logging_setup import logger
-import aiohttp
-from .utils import html_to_markdown, save_text_to_gcs, clean_extracted_text, safe_format_url
+import aiohttp, asyncio
 
-# Prefer the minimal config for scraper-only deployments; fall back to sensible defaults
 try:
-    from .config_minimal import SCRAPE_RESULT_TTL, AIOHTTP_REQUEST_TIMEOUT, MAX_CONCURRENT_SCRAPES
-    CACHE_ENABLED = False
-    CACHE_TTL = int(getattr(__import__('backend.src.config_minimal', fromlist=['SCRAPE_RESULT_TTL']), 'SCRAPE_RESULT_TTL', SCRAPE_RESULT_TTL) or 86400)
-    MIN_EXTRACT_LENGTH = 400
+    from .config import CACHE_ENABLED, CACHE_TTL, MIN_EXTRACT_LENGTH
 except Exception:
     CACHE_ENABLED, CACHE_TTL, MIN_EXTRACT_LENGTH = True, 86400, 400
 
@@ -47,10 +42,7 @@ class Scraper:
         self._start_lock = asyncio.Lock()
         # Load runtime knobs from config when available so Cloud Run can tune these
         try:
-            from .config_minimal import MAX_CONCURRENT_SCRAPES, AIOHTTP_REQUEST_TIMEOUT
-            PLAYWRIGHT_MAX_TABS = int(MAX_CONCURRENT_SCRAPES or 3)
-            AIOHTTP_RETRIES = 1
-            URL_TIMEOUT = int(AIOHTTP_REQUEST_TIMEOUT or 30)
+            from .config import PLAYWRIGHT_MAX_TABS, AIOHTTP_RETRIES, URL_TIMEOUT
         except Exception:
             PLAYWRIGHT_MAX_TABS = 3
             AIOHTTP_RETRIES = 1
@@ -427,35 +419,5 @@ class Scraper:
                     logger.debug(f"Failed to write to cache for {url}: {e}")
         except Exception:
             logger.debug("Error while attempting to cache result", exc_info=True)
-
-        # Post-process successful scrape: convert to markdown and save to GCS (if configured)
-        try:
-            if res and getattr(res, 'success', False):
-                content_src = res.html if getattr(res, 'html', None) else res.text
-                if content_src:
-                    try:
-                        if getattr(res, 'html', None) and '<' in content_src:
-                            markdown = html_to_markdown(content_src)
-                        else:
-                            markdown = clean_extracted_text(content_src)
-                    except Exception as e:
-                        logger.debug(f"Markdown conversion failed: {e}")
-                        markdown = clean_extracted_text(content_src)
-
-                    # Attempt upload; save path back on the result for API consumers
-                    try:
-                        gcs_path = save_text_to_gcs(markdown, filename_prefix='scraped')
-                        if gcs_path:
-                            setattr(res, 'gcs_path', gcs_path)
-                    except Exception as e:
-                        logger.debug(f"Failed to upload scraped markdown to GCS: {e}")
-
-                    # Attach markdown content (may be large)
-                    try:
-                        setattr(res, 'markdown', markdown)
-                    except Exception:
-                        pass
-        except Exception:
-            logger.debug('Post-processing failed', exc_info=True)
 
         return res if res is not None else ScrapedContent(url=url, title=url, text="", success=False, error="No result")

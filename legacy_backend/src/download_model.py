@@ -1,3 +1,12 @@
+from __future__ import annotations
+
+"""Archived stub for `download_model.py`.
+
+Model downloading utilities were archived. Restore full implementation from
+Git history if needed.
+"""
+
+raise ImportError("backend.src.download_model has been archived to backend/archived/. Restore from Git history if needed.")
 
 import logging
 logger = logging.getLogger(__name__)

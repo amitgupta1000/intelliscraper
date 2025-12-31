@@ -1,14 +1,10 @@
-# enhanced_embeddings.py
-"""
-Enhanced embedding implementation using direct Google AI client with task type specification.
-Uses the latest gemini-embedding-001 model with proper task configuration.
+"""Archived stub for `enhanced_embeddings.py`.
+
+Enhanced embeddings implementation was archived to simplify the scraper-only
+deployment. Restore from Git history to re-enable.
 """
 
-from .logging_setup import logger
-import asyncio
-from typing import List, Dict, Any, Optional, Union
-import numpy as np
-from dataclasses import dataclass
+raise ImportError("backend.src.enhanced_embeddings has been archived to backend/archived/. Restore from Git history if needed.")
 
 # LangChain base class import
 try:

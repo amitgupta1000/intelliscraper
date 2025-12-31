@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import type { ResearchSession, ResearchRequest } from '../types';
+import type { ResearchSession, ResearchRequest, ResearchStatusResponse, ResearchResultResponse } from '../types';
 import {
   startResearch,
   getResearchStatus,
@@ -60,15 +61,16 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
         progress: 100,
       }));
       // no-op: we don't show auto-conclude toasts
-    } catch (err: any) {
+    } catch (err: unknown) {
       // If the backend conclude fails, mark locally concluded to avoid hanging sessions
+      const message = err instanceof Error ? err.message : String(err);
       setSession(prev => ({
         ...prev,
         isLoading: false,
         currentStatus: 'concluded',
         conclusionMessage: 'Research concluded (local)',
         progress: 100,
-        error: err?.message || null,
+        error: message || null,
       }));
       // no-op: avoid auto-conclude toast
     }
@@ -77,7 +79,6 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
     try {
       clearSession();
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error('clearSession failed after conclude', e);
     }
   }, [session.sessionId, clearSession]);
@@ -106,12 +107,12 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
 
       const poll = async () => {
         try {
-          const status = await getResearchStatus(newSessionId);
+          const status: ResearchStatusResponse = await getResearchStatus(newSessionId);
           setSession(prev => ({
             ...prev,
-            currentStatus: status.current_step as any,
+            currentStatus: status.current_step as ResearchSession['currentStatus'],
             progress: status.progress,
-            processingUrls: (status as any).processing_urls || [],
+            processingUrls: status.processing_urls || [],
           }));
 
           // Handle concluded sessions explicitly
@@ -122,13 +123,13 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
               currentStatus: 'concluded',
               conclusionMessage: status.conclusion_message || null,
               progress: status.progress || 100,
-              usedCache: (status as any).used_cache || false,
+              usedCache: status.used_cache || false,
             }));
             return;
           }
 
             if (status.status === 'completed') {
-            const result = await getResearchResult(newSessionId);
+            const result: ResearchResultResponse = await getResearchResult(newSessionId);
             setSession(prev => ({
               ...prev,
               isLoading: false,
@@ -138,23 +139,24 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
               ],
               progress: 100,
               currentStatus: 'completed',
-              usedCache: (status as any).used_cache || false,
+              usedCache: status.used_cache || false,
             }));
 
             // If we received a non-empty analysis result, leave the session in
             // `completed` state and allow the UI to display results. The user
             // can choose to download the analysis via the Results UI button.
           } else if (status.status === 'failed') {
-            throw new Error((status as any).detail || 'Research pipeline failed.');
+            throw new Error(status.detail || 'Research pipeline failed.');
           
           } else {
             setTimeout(poll, POLL_INTERVAL_MS);
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
           setSession(prev => ({
             ...prev,
             isLoading: false,
-            error: err.message || 'An unknown polling error occurred.',
+            error: message || 'An unknown polling error occurred.',
           }));
         }
       };
@@ -164,14 +166,15 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
 
       poll();
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       setSession(prev => ({
         ...prev,
         isLoading: false,
-        error: err.message || 'An unknown error occurred.',
+        error: message || 'An unknown error occurred.',
       }));
     }
-  }, [session.sessionId, concludeSession]);
+  }, [session.sessionId, POLL_INTERVAL_MS]);
 
   // No unmount cleanup needed for conclude timers (feature removed)
 

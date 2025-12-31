@@ -3,16 +3,12 @@
 Cross-Encoder Reranker Implementation for INTELLISEARCH
 Using LangChain's native CrossEncoderReranker for seamless integration
 """
+"""Archived stub for deprecated cross-encoder reranker.
 
-import logging
-from typing import List, Optional, Any, Union
-from dataclasses import dataclass
+Restore full implementation from Git history if needed.
+"""
 
-# Core LangChain imports that should be available
-try:
-    from langchain_core.documents import Document
-    LANGCHAIN_CORE_AVAILABLE = True
-except ImportError:
+raise ImportError("backend.src.deprecated_cross_encoder_hybrid_retriever.cross_encoder_reranker archived. Restore from Git history if needed.")
     logging.warning("langchain_core not available. Using fallback Document class.")
     class Document:
         def __init__(self, page_content="", metadata=None):

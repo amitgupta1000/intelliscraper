@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+"""Archived stub for deprecated cross-encoder helpers.
+
+Restore the full implementation from Git history if required.
+"""
+
+raise ImportError("backend.src.deprecated_cross_encoder_hybrid_retriever.server_friendly_cross_encoder archived. Restore from Git history if needed.")
+#!/usr/bin/env python3
 """
 Server-Friendly Cross-Encoder Implementation for INTELLISEARCH
 Optimized for performance, memory usage, and graceful degradation

@@ -4,7 +4,14 @@ Lightweight `UnifiedSearcher` that uses Serper and preserves caching behavior:
 - Tries Firestore cache first (if available).
 - Falls back to an in-memory TTL cache per process.
 - Uses `aiohttp` when available; otherwise offloads `requests` to a thread.
+
+Archived stub: this module was archived to `backend/archived/README.md`.
+The original search implementation (Serper + caches) was removed from
+the active codebase to simplify the project for a scraper-only deployment.
+Restore from Git history if needed.
 """
+
+raise ImportError("backend.src.search has been archived to backend/archived/. Restore from Git history if needed.")
 
 import asyncio
 import hashlib

@@ -6,6 +6,14 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from .logging_setup import logger
 
+"""Archived stub for `llm_utils.py`.
+
+The heavy LLM initialization code and Gemini/GenAI wrappers were archived.
+Restore from Git history if you need to re-enable LLM features.
+"""
+
+raise ImportError("backend.src.llm_utils has been archived to backend/archived/. Restore from Git history if needed.")
+
 # nest_asyncio removed - not needed for web deployment with FastAPI/uvicorn
 # FastAPI with uvicorn handles async execution properly without nested event loops
 

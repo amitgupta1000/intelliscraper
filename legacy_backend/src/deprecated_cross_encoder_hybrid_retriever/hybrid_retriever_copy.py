@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+
+"""Archived stub for hybrid_retriever_copy (deprecated).
+
+Restore original implementation from Git history if required.
+"""
+
+raise ImportError("backend.src.deprecated_cross_encoder_hybrid_retriever.hybrid_retriever_copy archived. Restore from Git history if needed.")
 # hybrid_retriever.py
 """
 Hybrid retriever combining BM25 (sparse) and vector search (dense) for improved relevance.

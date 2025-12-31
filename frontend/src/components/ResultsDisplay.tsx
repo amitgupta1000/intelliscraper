@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useResearch } from '../context/ResearchContext';
 import ReactMarkdown from 'react-markdown';
 import ProgressBar from './ProgressBar';
@@ -12,7 +12,8 @@ export const ResultsDisplay = () => {
     progress, 
     error,  
     conclusionMessage,
-    usedCache
+    usedCache,
+    concludeSession
   } = useResearch();
   const [isConcluding, setIsConcluding] = useState(false);
 
@@ -49,13 +50,24 @@ export const ResultsDisplay = () => {
         setIsConcluding(false);
       }, 500);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Download failed', err);
       setIsConcluding(false);
     }
   };
 
   // Auto-conclude is handled centrally by `ResearchContext` if needed.
+  // Auto-conclude the session after results are displayed for a configurable period.
+  // Set `VITE_AUTO_CONCLUDE_MS` in the frontend env to override (milliseconds).
+  useEffect(() => {
+    if (!lastAssistantMsg) return;
+    const AUTO_CONCLUDE_MS = Number(import.meta.env.VITE_AUTO_CONCLUDE_MS) || 60_000;
+    const timer = setTimeout(() => {
+      setIsConcluding(true);
+      concludeSession().finally(() => setIsConcluding(false));
+    }, AUTO_CONCLUDE_MS);
+
+    return () => clearTimeout(timer);
+  }, [lastAssistantMsg, concludeSession]);
 
   // Download conversation as text file
   // Saving and concluding are now automatic when results arrive.
@@ -90,15 +102,15 @@ export const ResultsDisplay = () => {
           <div className="section-box bg-white p-4 rounded border">
             <ReactMarkdown
               components={{
-                h1: ({node, ...props}) => <h2 className="font-bold text-xl mt-4 mb-2 text-primary-700" {...props} />,
-                h2: ({node, ...props}) => <h3 className="font-semibold text-lg mt-3 mb-1 text-primary-600" {...props} />,
-                ul: ({node, ...props}) => <ul className="list-disc ml-6 space-y-1" {...props} />,
-                li: ({node, ...props}) => <li className="text-gray-800" {...props} />,
-                strong: ({node, ...props}) => <strong className="font-bold text-primary-700" {...props} />,
-                p: ({node, ...props}) => <p className="mb-2 text-gray-900" {...props} />,
-                blockquote: ({node, ...props}) => <blockquote className="border-l-4 pl-4 italic text-gray-600 my-2" {...props} />,
-                code: ({node, ...props}) => <code className="bg-gray-100 px-1 rounded text-sm" {...props} />,
-              }}
+                  h1: ({...props}) => <h2 className="font-bold text-xl mt-4 mb-2 text-primary-700" {...props} />,
+                  h2: ({...props}) => <h3 className="font-semibold text-lg mt-3 mb-1 text-primary-600" {...props} />,
+                  ul: ({...props}) => <ul className="list-disc ml-6 space-y-1" {...props} />,
+                  li: ({...props}) => <li className="text-gray-800" {...props} />,
+                  strong: ({...props}) => <strong className="font-bold text-primary-700" {...props} />,
+                  p: ({...props}) => <p className="mb-2 text-gray-900" {...props} />,
+                  blockquote: ({...props}) => <blockquote className="border-l-4 pl-4 italic text-gray-600 my-2" {...props} />,
+                  code: ({...props}) => <code className="bg-gray-100 px-1 rounded text-sm" {...props} />,
+                }}
             >
               {lastAssistantMsg.content}
             </ReactMarkdown>

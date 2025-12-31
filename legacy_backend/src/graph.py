@@ -1,28 +1,11 @@
-# graph.py
-# This file defines the LangGraph workflow.
-from .logging_setup import logger
+"""Archived stub for `graph.py`.
 
-# Try to import LangGraph; provide a minimal fallback for static linting/runtime without the package
-try:
-    from langgraph.graph import StateGraph, START, END, add_messages
-except (ImportError, Exception):
-    logging.warning("langgraph.graph not available; using fallback StateGraph for static checks.")
-    # Minimal fallback implementation so other modules can import graph during lint/static analysis
-    START = "__START__"
-    END = "__END__"
-    add_messages = None
-    class StateGraph:
-        def __init__(self, state_type=None):
-            self.nodes = {}
-        def add_node(self, name, func):
-            self.nodes[name] = func
-        def add_edge(self, a, b):
-            pass
-        def add_conditional_edges(self, node, route_fn, mapping):
-            pass
-        def compile(self):
-            logger.info("Fallback StateGraph.compile() called — no-op.")
-            return None
+LangGraph workflow and orchestration were archived to simplify the
+project for a scraper-only deployment. Restore the original workflow
+from Git history if needed.
+"""
+
+raise ImportError("backend.src.graph has been archived to backend/archived/. Restore from Git history if needed.")
 
 from typing import TypedDict, Optional, List, Dict, Any # Import necessary types
 # Import nodes and AgentState from nodes.py

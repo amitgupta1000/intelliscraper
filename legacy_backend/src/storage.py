@@ -1,9 +1,7 @@
 """Storage helpers for scraped content.
 
 Design (clear responsibilities):
-- Firestore: metadata, lookup, TTL and light-weight fields (url, title, snippet,
   gcs paths, content_hash, canonical_url, fetched_at, expires_at, id).
-- GCS: large blob storage for full `text` and optional `html` content. Firestore
   stores the `gcs_text_path` / `gcs_html_path` pointing to the GCS object.
 
 Typical workflow:
@@ -30,6 +28,16 @@ Usage example:
 """
 from __future__ import annotations
 
+"""Archived module stub for `storage.py`.
+
+This module was archived to `backend/archived/README.md` to simplify a
+scraper-only deployment. The original implementation (GCS/Firestore
+helpers) was removed from the active codebase and archived.
+
+To restore the original implementation, recover the file from Git history
+or the `backend/archived/` directory if you preserved copies.
+"""
+raise ImportError("backend.src.storage has been archived to backend/archived/. Restore from Git history if needed.")
 import hashlib
 import threading
 from datetime import datetime, timedelta

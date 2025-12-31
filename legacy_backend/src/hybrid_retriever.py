@@ -1,12 +1,10 @@
-# hybrid_retriever.py
-"""
-Hybrid retriever combining BM25 (sparse) and vector search (dense) with contextual compression and reranking.
-This version uses standard LangChain components for ensemble retrieval and reranking,
-making it more maintainable and easier to understand.
+"""Archived stub for `hybrid_retriever.py`.
+
+Hybrid retrieval implementation was archived to reduce dependencies. Restore
+from Git history if hybrid retrieval is required again.
 """
 
-from .logging_setup import logger
-from typing import List, Dict, Optional, Tuple, Any
+raise ImportError("backend.src.hybrid_retriever has been archived to backend/archived/. Restore from Git history if needed.")
 
 # Type definitions and fallbacks
 try:

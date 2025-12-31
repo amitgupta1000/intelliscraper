@@ -45,7 +45,7 @@ export interface ResearchResultResponse {
   analysis_filename?: string;
   appendix_filename?: string;
   sources?: string[];
-  qa_pairs?: Array<{ question: string; answer: string; citations?: any[] }>;
+  qa_pairs?: Array<{ question: string; answer: string; citations?: Array<{ source?: string; locator?: string }> }>;
 }
 
 /**
@@ -58,4 +58,6 @@ export interface ResearchStatusResponse {
   error?: string;
   conclusion_message?: string;
   processing_urls?: string[];
+  used_cache?: boolean;
+  detail?: string;
 }

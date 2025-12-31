@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-Optimized Cross-Encoder Module for INTELLISEARCH
-Unified implementation with model caching, performance optimizations, and graceful fallbacks
+
+"""Archived stub for deprecated cross-encoder implementation.
+
+Restore the original module from Git history if required.
 """
 
-import logging
-import time
-import threading
-from typing import List, Optional, Dict, Any, Tuple
-from dataclasses import dataclass
-from functools import lru_cache
+raise ImportError("backend.src.deprecated_cross_encoder_hybrid_retriever.cross_encoder archived. Restore from Git history if needed.")
 
 try:
     from langchain_core.documents import Document

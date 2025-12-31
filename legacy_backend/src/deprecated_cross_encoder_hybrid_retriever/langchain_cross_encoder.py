@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""
-LangChain-Compatible Cross-Encoder Reranker for INTELLISEARCH
-Uses proper ContextualCompressionRetriever pattern with server-friendly optimizations
+
+"""Archived stub for deprecated cross-encoder langchain integration.
+
+Restore from Git history to re-enable.
 """
 
-import logging
-import time
-from typing import List, Optional, Dict, Any, Sequence
-from dataclasses import dataclass
+raise ImportError("backend.src.deprecated_cross_encoder_hybrid_retriever.langchain_cross_encoder archived. Restore from Git history if needed.")
 
 try:
     from langchain_core.documents import Document
