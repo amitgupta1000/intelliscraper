@@ -407,9 +407,6 @@ def format_research_report(report_content: str) -> str:
     if not report_content or not report_content.strip():
         return report_content
 
-    # Enhance the conclusion section before further formatting
-    report_content = enhance_conclusion_section(report_content)
-
     # Split into lines for processing
     lines = report_content.split('\n')
     formatted_lines = []
@@ -507,17 +504,6 @@ def enhance_report_readability(report_content: str) -> str:
     content = format_research_report(content)
     
     return content
-
-
-# Replace all '## Conclusion' with a bold section header for conclusion
-import re
-
-def enhance_conclusion_section(text: str) -> str:
-    # Replace markdown '## Conclusion' with bolded 'Conclusion' section
-    return re.sub(r'## Conclusion\s*', '\n**Conclusion**\n', text)
-
-# Example usage in formatting pipeline:
-# formatted_text = enhance_conclusion_section(generated_text)
 
 
 logger.info("utils.py loaded with utility functions.")

@@ -9,13 +9,11 @@ WORKDIR /app
 
 # Ensure a non-root user exists
 RUN id appuser || useradd -m -s /bin/bash appuser || true
-
-# Copy application code (preserve ownership)
-# Copy backend directory; do not attempt to copy module specifiers like "backend.src.api"
+COPY --chown=appuser:appuser main.py .
 COPY --chown=appuser:appuser backend/ ./backend/
 
 # Install Python dependencies from backend requirements
-RUN pip install --no-cache-dir -r backend/requirements-scraper.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Ensure Playwright browsers are present (base image typically includes them,
 # but run install to be safe in case of variant images)
@@ -32,5 +30,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 # Switch to non-root user
 USER appuser
 
-# Run the FastAPI app with Uvicorn
-CMD ["uvicorn", "backend.src.api:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1", "--log-level", "info"]
+# Run the FastAPI app via the root module expected by GCP (main:app)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1", "--log-level", "info"]

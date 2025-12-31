@@ -1,5 +1,6 @@
 fastapi>=0.95
 uvicorn[standard]>=0.22
+gunicorn>=20.1.0
 aiohttp>=3.8
 beautifulsoup4>=4.12
 markdownify>=0.9
