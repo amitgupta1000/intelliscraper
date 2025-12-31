@@ -28,6 +28,7 @@ export const ResultsDisplay = () => {
     try {
       setIsConcluding(true);
 
+      // Default local download: build a blob containing the full content shown on-screen
       const parts: string[] = [];
       if (userQuery) parts.push(`Research Question:\n${userQuery.content}\n\n`);
       parts.push('Analysis:\n');

@@ -50,16 +50,16 @@ class Scraper:
             from .config_minimal import MAX_CONCURRENT_SCRAPES, AIOHTTP_REQUEST_TIMEOUT
             PLAYWRIGHT_MAX_TABS = int(MAX_CONCURRENT_SCRAPES or 3)
             AIOHTTP_RETRIES = 1
-            URL_TIMEOUT = int(AIOHTTP_REQUEST_TIMEOUT or 30)
+            URL_TIMEOUT = int(AIOHTTP_REQUEST_TIMEOUT or 60)
         except Exception:
             PLAYWRIGHT_MAX_TABS = 3
             AIOHTTP_RETRIES = 1
-            URL_TIMEOUT = 30
+            URL_TIMEOUT = 60
 
         # GLOBAL LIMIT: number of concurrent Playwright contexts (tabs)
         self._semaphore = asyncio.Semaphore(PLAYWRIGHT_MAX_TABS or 3)
         # aiohttp retry/timeouts can be tuned via config
-        self._aiohttp_retries = AIOHTTP_RETRIES if (AIOHTTP_RETRIES is not None) else 1
+        self._aiohttp_retries = AIOHTTP_RETRIES if (AIOHTTP_RETRIES is not None) else 3
         self._aiohttp_timeout = URL_TIMEOUT or 30
 
     async def start(self):
@@ -70,10 +70,6 @@ class Scraper:
             logger.info("Starting Persistent Playwright Browser...")
             self._playwright = await async_playwright().start()
 
-            # Use conservative, platform-aware launch args. Some flags (like --single-process
-            # or --disable-dev-shm-usage) can cause Chromium to crash on Windows or desktop
-            # environments. Try a tuned set of args per platform, and fall back to a no-args
-            # launch if the first attempt fails.
             try:
                 launch_args = []
                 if sys.platform.startswith("linux"):
@@ -278,31 +274,22 @@ class Scraper:
             logger.debug(f"Skipping invalid URL (scheme): {url}")
             return False
 
-        try:
-            from .config import BLOCKED_DOMAINS, SKIP_EXTENSIONS
-        except Exception:
-            BLOCKED_DOMAINS = []
-            SKIP_EXTENSIONS = [
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".gif",
-                ".svg",
-                ".css",
-                ".js",
-                ".ico",
-                ".json",
-                ".xml",
-                ".pdf",
-            ]
+        SKIP_EXTENSIONS = [
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".css",
+            ".js",
+            ".ico",
+            ".json",
+            ".xml",
+            ".pdf",
+        ]
 
         parsed = urlparse(url)
         netloc = parsed.netloc.lower() if parsed.netloc else ""
-
-        # Block known bad/blocked domains
-        if any(domain in netloc for domain in (BLOCKED_DOMAINS or [])):
-            logger.debug(f"Skipping blocked domain: {url}")
-            return False
 
         # Skip by extension
         if any(parsed.path.lower().endswith(ext) for ext in (SKIP_EXTENSIONS or [])):
@@ -406,14 +393,48 @@ class Scraper:
         else:
             # 4. Choose scraping strategy
             try:
-                if dynamic:
-                    res = await self._scrape_with_playwright(url)
-                else:
-                    if session:
-                        res = await self._scrape_with_aiohttp(url, session=session)
-                    else:
-                        async with aiohttp.ClientSession() as temp_session:
-                            res = await self._scrape_with_aiohttp(url, temp_session)
+                # Try aiohttp up to 3 separate attempts (reuse session when possible)
+                aio_attempts = 3
+                min_content_len = 500
+                res = None
+                local_session = session
+                created_local = False
+                try:
+                    if local_session is None:
+                        local_session = aiohttp.ClientSession()
+                        created_local = True
+
+                    for attempt in range(aio_attempts):
+                        logger.debug(f"[scraper] aiohttp attempt {attempt+1}/{aio_attempts} for {url}")
+                        try:
+                            candidate = await self._scrape_with_aiohttp(url, session=local_session, retries=0)
+                        except Exception as e:
+                            logger.debug(f"[scraper] aiohttp attempt exception for {url}: {e}")
+                            candidate = ScrapedContent(url=url, title=url, text="", success=False, error=str(e), strategy="aiohttp")
+
+                        if candidate and getattr(candidate, 'success', False):
+                            primary_text = candidate.html if getattr(candidate, 'html', None) else candidate.text
+                            if primary_text and len(primary_text or "") >= min_content_len:
+                                res = candidate
+                                logger.debug(f"[scraper] aiohttp produced sufficient content for {url} (len={len(primary_text)})")
+                                break
+                            else:
+                                logger.debug(f"[scraper] aiohttp content too short for {url} (len={len(primary_text or '')}); will retry or fallback")
+                                # continue to next attempt
+                        else:
+                            logger.debug(f"[scraper] aiohttp attempt returned no success for {url}; error={getattr(candidate,'error',None)}")
+
+                    # If aiohttp didn't produce sufficient content, fallback to Playwright
+                    if res is None:
+                        logger.info(f"[scraper] Falling back to Playwright for {url}")
+                        res = await self._scrape_with_playwright(url)
+
+                finally:
+                    if created_local and local_session:
+                        try:
+                            await local_session.close()
+                        except Exception:
+                            pass
             except Exception as e:
                 logger.exception("Unexpected error during scrape for %s: %s", url, e)
                 res = ScrapedContent(url=url, title=url, text="", success=False, error=str(e))

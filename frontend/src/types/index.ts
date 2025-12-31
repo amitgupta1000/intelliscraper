@@ -49,6 +49,18 @@ export interface ResearchResultResponse {
 }
 
 /**
+ * Response shape for `/api/scrape` endpoint.
+ */
+export interface ScrapeResponse {
+  url: string;
+  title?: string | null;
+  markdown: string;
+  gcs_path?: string | null;
+  download_url?: string | null;
+  text?: string | null;
+}
+
+/**
  * The response from the /api/research/{session_id}/status endpoint.
  */
 export interface ResearchStatusResponse {
