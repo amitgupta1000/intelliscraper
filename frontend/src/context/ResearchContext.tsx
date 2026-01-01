@@ -38,7 +38,7 @@ export const ResearchProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const sidToUse = sid ?? session.sessionId ?? undefined;
-    const API_BASE_URL = import.meta.env.VITE_API_URL as string || 'http://localhost:8080';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
     if (sidToUse) {
       try {
