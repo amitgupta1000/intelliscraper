@@ -59,7 +59,7 @@ app.add_middleware(
         "http://localhost:3002",
         "http://localhost:5173",
         "http://localhost:8000",
-        "https://intelliscraper-44c6f.web.app/"
+        "https://intelliscraper-44c6f.web.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
