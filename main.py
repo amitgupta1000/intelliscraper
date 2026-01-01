@@ -16,7 +16,6 @@ from typing import Optional, Dict, Any
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from starlette.middleware.cors import CORSMiddleware
 from backend.src.scraper import Scraper
 
 @asynccontextmanager
