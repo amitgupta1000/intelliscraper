@@ -25,6 +25,9 @@ RUN python -m playwright install --with-deps || true
 # Ensure playwright browser path is writable by the app user (Playwright image uses /ms-playwright)
 RUN mkdir -p /ms-playwright && chown -R appuser:appuser /ms-playwright || true
 
+# Ensure application logs directory exists and is writable by appuser
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs || true
+
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
