@@ -4,7 +4,7 @@ import json
 from .logging_setup import logger
 import asyncio
 import time # Added time for cache timestamp
-
+# Added readability for main content extraction
 # Define SearchResult and PDF classes here for simplicity or ensure they are imported
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -301,10 +301,27 @@ def html_to_markdown(html: str) -> str:
     """
     if not html:
         return ''
+    # First, try to extract the main article HTML using readability-lxml
+    try:
+        from readability import Document
+        try:
+            doc = Document(html)
+            summary_html = doc.summary()
+            # If summary is empty, fall back to the original html
+            if summary_html and len(summary_html.strip()) > 20:
+                html = summary_html
+        except Exception:
+            # readability failed for this document; continue with original html
+            pass
+    except Exception:
+        # readability not installed; continue
+        pass
+
     # Prefer markdownify
     try:
         from markdownify import markdownify as mdify
-        return mdify(html)
+        # use ATX-style headings and preserve lists
+        return mdify(html, heading_style='ATX', bullets='-')
     except Exception:
         pass
     # Fallback to html2text
@@ -465,8 +482,57 @@ def format_research_report(report_content: str) -> str:
     
     # Ensure report starts and ends cleanly
     formatted_content = formatted_content.strip()
-    
+    # Prepend a generated TOC if headings exist
+    try:
+        toc = generate_toc(formatted_content, max_level=3)
+        if toc:
+            formatted_content = toc + '\n\n' + formatted_content
+    except Exception:
+        pass
+
     return formatted_content
+
+
+def _slugify_heading(text: str) -> str:
+    """Create a GitHub-style anchor slug from a heading text."""
+    s = text.strip().lower()
+    # remove code ticks
+    s = re.sub(r'`+', '', s)
+    # remove non-alphanumeric characters except spaces and hyphens
+    s = re.sub(r"[^a-z0-9\s-]", '', s)
+    s = re.sub(r'\s+', '-', s)
+    s = re.sub(r'-{2,}', '-', s)
+    s = s.strip('-')
+    return s
+
+
+def generate_toc(markdown: str, max_level: int = 3) -> str:
+    """Generate a markdown table-of-contents from headings in the given markdown.
+
+    - Scans for ATX-style headings (#, ##, ###)
+    - Includes headings up to `max_level`
+    - Produces nested bullet list with links to anchors
+    """
+    if not markdown:
+        return ''
+    toc_lines = []
+    for line in markdown.splitlines():
+        m = re.match(r'^(#{1,6})\s+(.*)', line)
+        if not m:
+            continue
+        level = len(m.group(1))
+        if level > max_level:
+            continue
+        title = m.group(2).strip()
+        if not title:
+            continue
+        anchor = _slugify_heading(title)
+        indent = '  ' * (level - 1)
+        toc_lines.append(f"{indent}- [{title}](#{anchor})")
+    if not toc_lines:
+        return ''
+    toc = ['## Table of contents', ''] + toc_lines + ['']
+    return '\n'.join(toc)
 
 
 def enhance_report_readability(report_content: str) -> str:

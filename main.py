@@ -161,6 +161,16 @@ async def scrape(req: ScrapeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get('/', include_in_schema=False)
+async def root():
+    return {'message': 'intelliscraper backend. Use POST /scrape to submit a URL.'}
+
+
+@app.get('/health', include_in_schema=False)
+async def health():
+    return {'status': 'ok'}
+
+
 # --- Minimal research session manager (in-memory) ---
 SESSIONS: Dict[str, Dict[str, Any]] = {}
 

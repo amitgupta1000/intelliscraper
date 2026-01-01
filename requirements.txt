@@ -5,6 +5,7 @@ aiohttp>=3.8
 beautifulsoup4>=4.12
 markdownify>=0.9
 html2text>=2020.1.16
+readability-lxml>=0.8
 google-cloud-storage>=2.10
 playwright>=1.30
 pytest>=7.0

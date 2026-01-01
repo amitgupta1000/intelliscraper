@@ -10,7 +10,7 @@ export interface ConversationMessage {
 /**
  * Possible statuses for a research task as returned by the API.
  */
-export type ResearchTaskStatus = 'initializing' | 'running' | 'completed' | 'failed' | 'pending' | 'concluded';
+export type ResearchTaskStatus = 'initializing' | 'running' | 'completed' | 'failed' | 'pending' | 'concluded' | 'concluding';
 
 /**
  * Represents the state of a research session.
